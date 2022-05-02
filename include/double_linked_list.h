@@ -14,7 +14,7 @@ struct LinkedList {
 };
 
 struct LinkedList *createList();
-void destroyList();
+void destroyList(struct LinkedList **list);
 
 void addElement(struct LinkedList *list, char *stringValue); 
 int insertElement(struct LinkedList *list, char* stringValue, int index);

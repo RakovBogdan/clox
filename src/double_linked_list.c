@@ -11,8 +11,37 @@ struct LinkedList *createList() {
     return list;
 }
 
-void destroyList() {
-   //should destroy both LinkedList and all Nodes 
+void destroyList(struct LinkedList **list) {
+    struct LinkedList *listPointer = *list; 
+    struct Node *currentNode = listPointer->tail;
+
+    if (currentNode == NULL) {
+        free(listPointer);
+        list = NULL;
+        return;
+    }
+    if (currentNode == listPointer->head) {
+        free(currentNode->stringValue);
+        free(currentNode);
+        free(listPointer);
+        list = NULL;
+        return;
+    }
+
+
+    struct Node *previousNode = currentNode->previous;
+
+    while (previousNode != NULL) {
+        free(currentNode->stringValue);
+        free(currentNode);
+        currentNode = previousNode;
+        previousNode = currentNode->previous;
+    }
+    
+    free(currentNode->stringValue);
+    free(currentNode);
+    free(listPointer);
+    list = NULL;
 }
 
 struct Node *getNodeByIndex (struct LinkedList *list, int index) {
@@ -52,39 +81,34 @@ void addElement(struct LinkedList *list, char *stringValue) {
         return;
     }    
 
-    struct Node *currentNode = list->head;
-    while (currentNode->next != NULL) {
-        currentNode = currentNode->next;
-    }
-
     struct Node *newNode = (struct Node*)malloc(sizeof(struct Node));
     newNode->stringValue = stringValue;
-    newNode->previous = currentNode;
-    currentNode->next = newNode;
-    return;
+    newNode->previous = list->tail;
+    list->tail->next = newNode;
 }
 
-int insertElement(struct LinkedList *list, char* stringValue, int index) {
+int insertElement(struct LinkedList *list, char *stringValue, int index) {
     struct Node *nodeToInsert = (struct Node*)malloc(sizeof(struct Node)); 
     nodeToInsert->stringValue = stringValue;
     struct Node *nodeToMove = getNodeByIndex(list, index);
     
     
     if (nodeToMove == NULL && index != 0) {
-        printf("cant find element with index%i\n", index);
+        printf("cant find element with index:%i\n", index);
         return 1; 
     } 
 
     if (nodeToMove == list->head && nodeToMove == list->tail) {
         list->head = nodeToInsert;
         nodeToInsert->next = nodeToMove;
+        nodeToInsert->previous = NULL;
         nodeToMove->previous = nodeToInsert;
         return 0;
     } 
     if (nodeToMove == list->head) {
         list->head = nodeToInsert;
         nodeToInsert->next = nodeToMove;
-        nodeToMove->next->previous = nodeToInsert;
+        nodeToInsert->previous = NULL;
         nodeToMove->previous = nodeToInsert;
         return 0;
     }

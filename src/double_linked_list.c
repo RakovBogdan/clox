@@ -17,31 +17,27 @@ void destroyList(struct LinkedList **list) {
 
     if (currentNode == NULL) {
         free(listPointer);
-        list = NULL;
+        *list = NULL;
         return;
     }
     if (currentNode == listPointer->head) {
-        free(currentNode->stringValue);
         free(currentNode);
         free(listPointer);
-        list = NULL;
+        *list = NULL;
         return;
     }
-
 
     struct Node *previousNode = currentNode->previous;
 
     while (previousNode != NULL) {
-        free(currentNode->stringValue);
         free(currentNode);
         currentNode = previousNode;
         previousNode = currentNode->previous;
     }
     
-    free(currentNode->stringValue);
     free(currentNode);
     free(listPointer);
-    list = NULL;
+    *list = NULL;
 }
 
 struct Node *getNodeByIndex (struct LinkedList *list, int index) {

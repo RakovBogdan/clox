@@ -16,5 +16,8 @@ int main() {
     insertElement(list, "Between first and second", 1);
     printList(list);
     destroyList(&list);
+    if (list == NULL) {
+        printf("successfully cleared a list");
+    }
     return 0;
 }

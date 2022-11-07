@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<double_linked_list.h>
 
-int main() {
+void test_list() {
     printf("Hello, world!\n");
     struct LinkedList *list = createList();
     addElement(list, "third element");
@@ -19,5 +19,4 @@ int main() {
     if (list == NULL) {
         printf("successfully cleared a list");
     }
-    return 0;
 }

@@ -22,7 +22,7 @@ void writeChunk(Chunk* chunk, uint8_t byte) {
 
 int addConstant(Chunk* chunk, Value value) {
 	writeValueArray(&chunk->constants, value);
-	return &chunk->constants.count - 1;
+	return chunk->constants.count - 1;
 }
 
 void freeChunk(Chunk* chunk) {

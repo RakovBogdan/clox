@@ -1,12 +1,13 @@
 #include "stdlib.h"
 #include "chunk.h"
 #include "memory.h"
+#include "line.h"
 
 void initChunk(Chunk* chunk) {
 	chunk->count = 0;
 	chunk->capacity = 0;
 	chunk->code = NULL;
-	chunk->lines = NULL;
+	initLineArray(&chunk->lines);
 	initValueArray(&chunk->constants);
 }
 
@@ -15,10 +16,9 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
 		int oldCapacity = chunk->capacity;
 		chunk->capacity = GROW_CAPACITY(oldCapacity);
 		chunk->code = GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
-		chunk->lines = GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
 	}
 	chunk->code[chunk->count] = byte;
-	chunk->lines[chunk->count] = line;
+	writeLineArray(&chunk->lines, line);
 	chunk->count++;
 }
 
@@ -30,7 +30,7 @@ int addConstant(Chunk* chunk, Value value) {
 
 void freeChunk(Chunk* chunk) {
 	FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
-	FREE_ARRAY(int, chunk->lines, chunk->capacity);
 	freeValueArray(&chunk->constants);
+	freeLineArray(&chunk->lines);
 	initChunk(chunk);
 }

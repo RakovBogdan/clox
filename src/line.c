@@ -34,7 +34,6 @@ int getLine(LineArray* lineArray, int offset) {
         if (sum > offset) {
             return lineArray->values[i];
         }
-        i += 2;
     }
 }
 

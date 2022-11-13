@@ -15,8 +15,7 @@ int disassembleInstruction(Chunk* chunk, int offset) {
     printf("%04d ", offset);
     if (offset > 0 && getLine(&chunk->lines, offset) == getLine(&chunk->lines, offset - 1)) {
         printf("   | ");
-    }
-    else {
+    } else {
         printf("%4d ", getLine(&chunk->lines, offset));
     }
     uint8_t instruction = chunk->code[offset];

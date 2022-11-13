@@ -13,16 +13,15 @@ void freeLineArray(LineArray* lineArray) {
 }
 
 void writeLineArray(LineArray* lineArray, int line) {
-    if (lineArray->capacity == 0 || (lineArray->count > 0 && line != lineArray->values[lineArray->count - 1] &&
-                 lineArray->capacity < lineArray->count + 2)) {
+    bool isSameLine = lineArray->count > 0 && lineArray->values[lineArray->count - 1] == line;
+    if (lineArray->capacity == 0 || (!isSameLine && lineArray->capacity < lineArray->count + 2)) {
         int oldCapacity = lineArray->capacity;
         lineArray->capacity = GROW_CAPACITY(lineArray->capacity);
         lineArray->values = GROW_ARRAY(int, lineArray->values, oldCapacity, lineArray->capacity);
     }
-    if (lineArray->count > 0 && lineArray->values[lineArray->count - 1] == line) {
+    if (isSameLine) {
         lineArray->values[lineArray->count - 2]++;
-    }
-    else {
+    } else {
         lineArray->values[lineArray->count] = 1;
         lineArray->values[lineArray->count + 1] = line;
         lineArray->count += 2;

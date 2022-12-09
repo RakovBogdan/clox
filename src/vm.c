@@ -3,17 +3,24 @@
 #include "common.h"
 #include "debug.h"
 #include "vm.h"
+#include "memory.h"
 
 VM vm;
 
 void push(Value value) {
+    int count = vm.stack_top - vm.stack;
+    if (vm.capacity < count + 1) {
+        vm.capacity = GROW_CAPACITY(vm.capacity);
+        vm.stack = GROW_ARRAY(Value, vm.stack, count, vm.capacity);
+        vm.stack_top = vm.stack + count;
+    }
     *vm.stack_top = value;
     vm.stack_top++;
 }
 
 Value pop() {
     vm.stack_top--;
-    return *vm.stack_top;;
+    return *vm.stack_top;
 }
 
 static void resetStack() {
@@ -21,12 +28,17 @@ static void resetStack() {
 }
 
 void initVM() {
+    vm.capacity = STACK_MAX;
+    vm.stack = GROW_ARRAY(Value, vm.stack, 0, vm.capacity);
     resetStack();
 }
 
 
 void freeVM() {
-
+    FREE_ARRAY(Value, vm.stack, vm.capacity);
+    vm.stack = NULL;
+    vm.stack_top = NULL;
+    vm.capacity = 0;
 }
 
 

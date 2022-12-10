@@ -2,6 +2,8 @@
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
+#include <time.h>
+#include <stdio.h>
 
 int main(int argc, const char* argv[]) {
     initVM();
@@ -12,22 +14,17 @@ int main(int argc, const char* argv[]) {
 	writeChunk(&chunk, OP_CONSTANT, 123);
 	writeChunk(&chunk, constantAddress, 123);
 	
-	constantAddress = addConstant(&chunk, 3.4);
-	writeChunk(&chunk, OP_CONSTANT, 123);
-	writeChunk(&chunk, constantAddress, 123);
-	
-	writeChunk(&chunk, OP_ADD, 123);
-	
-	constantAddress = addConstant(&chunk, 5.6);
-	writeChunk(&chunk, OP_CONSTANT, 123);
-	writeChunk(&chunk, constantAddress, 123);
-
-	writeChunk(&chunk, OP_DIVIDE, 123);
-	writeChunk(&chunk, OP_NEGATE, 123);
+	for (int i = 0; i < 1000000001; i++) {
+		writeChunk(&chunk, OP_NEGATE, 123);
+	}
 	
 	writeChunk(&chunk, OP_RETURN, 123);
+	clock_t start = clock();
     interpret(&chunk);
+	clock_t end = clock();
+	double elapsed = ((double)(end - start)) / CLOCKS_PER_SEC;
     freeVM();
 	freeChunk(&chunk);
+	printf("Time: %.3f seconds\n", elapsed);
 	return 0;
 }

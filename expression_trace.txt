@@ -1,0 +1,50 @@
+(-1 + 2) * 3 - -4
+
+expression()
+	parsePrecedence(PREC_ASSIGNMENT);
+		getRule("(")->prefix // grouping()
+		grouping();
+			expression();
+				parsePrecedence(PREC_ASSIGNMENT);
+					getRule("-")->prefix // unary()
+					unary();
+						parsePrecedence(PREC_UNARY);
+							getRule("1")->prefix // number()
+							number();
+								strtod(); emitConstant();
+						emitByte(OP_NEGATE);
+					while(getRule(+)).precedence >= PREC_ASSIGNMENT)
+						getRule(+)->infix // binary();
+						binary();
+							parsePrecedence(PREC_TERM+1=PREC_FACTOR);
+								getRule(2)->prefix; // number()
+								number();
+									strtod(); emitConstant();
+								while(getRule(")").precedence >= PREC_FACTOR) // never true, PREC_NONE is < than PREC_FACTOR 
+							emitByte(+);
+					while(getRule(")").precedence >= PREC_ASSIGNMENT) // never true, PREC_NONE is < than PREC_ASSIGNMENT 
+			consume(")")
+		while(getRule(*).precedence >= PREC_ASSIGNMENT) // PREC_FACTOR > PREC_ASSIGNMENT
+			getRule(*)->infix // binary();
+			binary();
+				parsePrecedence(PREC_FACTOR+1=PREC_UNARY);
+					getRule(3)->prefix; //number
+					number();
+						strtod(); emitConstant();
+					while(getRule("-").precedence >= PREC_FACTOR) // never true, PREC_TERM is < than PREC_FACTOR 
+				emitByte(*);
+		while(getRule(-).precedence >= PREC_ASSIGNMENT) // PREC_TERM > PREC_ASSIGNMENT
+			getRule(-)->infix // binary();
+			binary();	
+				parsePrecedence(PREC_TERM+1=PREC_FACTOR);
+					getRule(-)->prefix; //unary
+					unary();
+						parsePrecedence(PREC_UNARY);
+							getRule("4")->prefix // number()
+							number();
+								strtod(); emitConstant();
+							while (getRule(EOF).precedence >= PREC_UNARY) { //never true, PREC_NONE is < than PREC_UNARY
+						emitByte(OP_NEGATE);
+					while(getRule(EOF).precedence >= PREC_FACTOR) // never true, PREC_NONE is < than PREC_FACTOR 
+				emitByte(-);
+		while(getRule(EOF).precedence >= PREC_ASSIGNMENT) // never true, PREC_NONE is < than PREC_ASSIGNMENT 

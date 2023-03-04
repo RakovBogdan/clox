@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "common.h"
 #include "debug.h"
@@ -17,6 +18,10 @@ Value pop() {
     return *vm.stack_top;;
 }
 
+Value peek(int distance) {
+    return vm.stack_top[-1 - distance];
+}
+
 static void resetStack() {
     vm.stack_top = vm.stack;
 }
@@ -31,14 +36,32 @@ void freeVM() {
 }
 
 
+void runtimeError(char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fputs("\n", stderr);
+
+    size_t instruction = vm.ip - vm.chunk->code - 1;
+    int line = vm.chunk->lines[instruction];
+    fprintf(stderr, "[line %d] in script\n", line);
+    resetStack();
+}
+
+
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
-#define BINARY_OP(op) \
+#define BINARY_OP(valueType, op) \
     do { \
-        double second = pop(); \
-        double first = pop(); \
-        push(first op second); \
+        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+            runtimeError("Both operands must be numbers"); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+        double second = AS_NUMBER(pop()); \
+        double first = AS_NUMBER(pop()); \
+        push(valueType(first op second)); \
     } while (false)
 
     for(;;) {
@@ -55,19 +78,23 @@ static InterpretResult run() {
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
             case OP_ADD:
-                BINARY_OP(+);
+                BINARY_OP(NUMBER_VAL, +);
                 break;
             case OP_SUBSTRACT:
-                BINARY_OP(-);
+                BINARY_OP(NUMBER_VAL, -);
                 break;
             case OP_MULTIPLY:
-                BINARY_OP(*);
+                BINARY_OP(NUMBER_VAL, *);
                 break;
             case OP_DIVIDE:
-                BINARY_OP(/);
+                BINARY_OP(NUMBER_VAL, /);
                 break;
             case OP_NEGATE:
-                push(-pop());
+                if (!IS_NUMBER(peek(0))) {
+                    runtimeError("Operator must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
             case OP_RETURN:
                 printValue(pop());

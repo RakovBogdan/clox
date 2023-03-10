@@ -60,7 +60,7 @@ static void errorAt(Token* token, const char* message) {
 	} else if (token->type == TOKEN_ERROR) {
 		//nothing, because TOKEN_ERROR means that parsed token is not human-readable
 	} else {
-		fprintf(stderr, "at '%.*s'", token->length, token->start);
+		fprintf(stderr, " at '%.*s'", token->length, token->start);
 	}
 
 	fprintf(stderr, ": %s\n", message);
@@ -193,6 +193,15 @@ static void binary() {
 	}
 }
 
+static void literal() {
+	TokenType tokenType = parser.previous.type;
+	switch (tokenType) {
+		case TOKEN_NIL: emitByte(OP_NIL); break;
+		case TOKEN_TRUE: emitByte(OP_TRUE); break;
+		case TOKEN_FALSE: emitByte(OP_FALSE); break;
+		default: return;
+	}
+}
 
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
@@ -220,17 +229,17 @@ ParseRule rules[] = {
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
   [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
   [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
   [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},

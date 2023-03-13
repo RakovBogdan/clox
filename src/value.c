@@ -33,3 +33,13 @@ void printValue(Value value) {
         case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
     }
 }
+
+bool valuesEqual(Value firstValue, Value secondValue) {
+    if (firstValue.type != secondValue.type) return false;
+    switch (firstValue.type) {
+        case VAL_BOOL: return AS_BOOL(firstValue) == AS_BOOL(secondValue);
+        case VAL_NIL: return true;
+        case VAL_NUMBER: return AS_NUMBER(firstValue) == AS_NUMBER(secondValue);
+        default: return false;
+    }
+}

@@ -15,7 +15,7 @@ void push(Value value) {
 
 Value pop() {
     vm.stack_top--;
-    return *vm.stack_top;;
+    return *vm.stack_top;
 }
 
 Value peek(int distance) {

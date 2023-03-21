@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Clox)
 
-set(SOURCES "src/linked_list/double_linked_list.c" "src/linked_list/test_list.c" "src/main.c" "src/chunk.c" "src/memory.c" "src/debug.c" "src/value.c" "src/vm.c" "src/compiler.c" "src/scanner.c")
+set(SOURCES "src/linked_list/double_linked_list.c" "src/linked_list/test_list.c" "src/main.c" "src/chunk.c" "src/memory.c" "src/debug.c" "src/value.c" "src/vm.c" "src/compiler.c" "src/scanner.c" "src/object.c")
 
 add_executable(Clox ${SOURCES})
 

@@ -29,6 +29,10 @@ ObjString* copyString(char* start, int length) {
 	return allocateString(heapChars, length);
 }
 
+ObjString* takeString(char* start, int length) {
+	allocateString(start, length);
+}
+
 void printObject(Value value) {
     switch ((AS_OBJ(value))->type) {
         case(OBJ_STRING): printf("%s", AS_CSTRING(value)); break;

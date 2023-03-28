@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "common.h"
 #include "debug.h"
 #include "vm.h"
+#include "object.h"
+#include "memory.h"
 #include "compiler.h"
 
 VM vm;
@@ -24,6 +27,20 @@ Value peek(int distance) {
 
 static bool isFalsey(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+static void concatenate() {
+    ObjString* secondString = AS_STRING(pop(0));
+    ObjString* firstString = AS_STRING(pop(1));
+
+    int length = firstString->length + secondString->length;
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, firstString->chars, firstString->length);
+    memcpy(chars + firstString->length, secondString->chars, secondString->length);
+    chars[length] = '\0';
+
+    ObjString* result = takeString(chars, length);
+    push(OBJ_VAL(result));
 }
 
 static void resetStack() {
@@ -81,9 +98,19 @@ static InterpretResult run() {
 #endif
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
-            case OP_ADD:
-                BINARY_OP(NUMBER_VAL, +);
+            case OP_ADD: {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    concatenate();
+                } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    double secondNumber = AS_NUMBER(pop());
+                    double firstNumber = AS_NUMBER(pop());
+                    push(NUMBER_VAL(firstNumber + secondNumber));
+                } else {
+                    runtimeError("Operators must be both numbers or both strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 break;
+            }
             case OP_SUBSTRACT:
                 BINARY_OP(NUMBER_VAL, -);
                 break;

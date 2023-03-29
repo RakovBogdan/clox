@@ -49,11 +49,11 @@ static void resetStack() {
 
 void initVM() {
     resetStack();
+    vm.objects = NULL;
 }
 
-
 void freeVM() {
-
+    freeObjects();
 }
 
 
@@ -164,7 +164,7 @@ InterpretResult interpret(const char* source) {
 
     if (!compile(source, &chunk)) {
         freeChunk(&chunk);
-        return INTERPRET_COMPILE_ERROR;
+		return INTERPRET_COMPILE_ERROR;
     }
 
     vm.chunk = &chunk;

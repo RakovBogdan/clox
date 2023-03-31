@@ -26,7 +26,7 @@ struct ObjString {
     char* chars;
 };
 
-ObjString* copyString(char* start, int length);
+ObjString* copyString(const char* start, int length);
 ObjString* takeString(char* start, int length);
 void printObject(Value value);
 

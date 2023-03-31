@@ -25,7 +25,7 @@ ObjString* allocateString(char* chars, int length) {
 	return string;
 }
 
-ObjString* copyString(char* start, int length) {
+ObjString* copyString(const char* start, int length) {
 	char* heapChars = ALLOCATE(char, length + 1);
     memcpy(heapChars, start, length);
 	heapChars[length] = '\0';

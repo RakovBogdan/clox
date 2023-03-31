@@ -2,4 +2,8 @@
 /out
 /.idea
 /.vs
+/debug
+/x64
 /cmake-build-debug
+*.sln
+*.vcxproj*

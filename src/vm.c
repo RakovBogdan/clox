@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "object.h"
+#include "value.h"
 #include "memory.h"
 #include "compiler.h"
 
@@ -34,13 +35,14 @@ static void concatenate() {
     ObjString* firstString = AS_STRING(pop(1));
 
     int length = firstString->length + secondString->length;
-    char* chars = ALLOCATE(char, length + 1);
-    memcpy(chars, firstString->chars, firstString->length);
-    memcpy(chars + firstString->length, secondString->chars, secondString->length);
-    chars[length] = '\0';
+    
+    ObjString* newString = (ObjString*)allocateObject(sizeof(ObjString) + length + 1, OBJ_STRING);
+    memcpy(newString->chars, firstString->chars, firstString->length);
+    memcpy(newString->chars + firstString->length, secondString->chars, secondString->length);
+    newString->chars[length] = '\0';
+    newString->length = length;
 
-    ObjString* result = takeString(chars, length);
-    push(OBJ_VAL(result));
+    push(OBJ_VAL(newString));
 }
 
 static void resetStack() {

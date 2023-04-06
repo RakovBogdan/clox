@@ -18,26 +18,24 @@ Obj* allocateObject(size_t size, ObjType type) {
 	return object;
 }
 
-ObjString* allocateString(char* chars, int length) {
+ObjString* allocateString(char* chars, int length, bool isOwner) {
 	ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 	string->chars = chars;
 	string->length = length;
+	string->isOwner = isOwner;
 	return string;
 }
 
-ObjString* copyString(const char* start, int length) {
-	char* heapChars = ALLOCATE(char, length + 1);
-    memcpy(heapChars, start, length);
-	heapChars[length] = '\0';
-	return allocateString(heapChars, length);
+ObjString* takeString(char* start, int length) {
+	return allocateString(start, length, false);
 }
 
-ObjString* takeString(char* start, int length) {
-	return allocateString(start, length);
+ObjString* takeStringAsOwner(char* start, int length) {
+	return allocateString(start, length, true);
 }
 
 void printObject(Value value) {
     switch ((AS_OBJ(value))->type) {
-        case(OBJ_STRING): printf("%s", AS_CSTRING(value)); break;
+        case(OBJ_STRING): printf("%.*s", AS_STRING(value)->length, AS_CSTRING(value)); break;
     }
 }

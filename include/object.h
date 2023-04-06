@@ -23,11 +23,12 @@ struct Obj {
 struct ObjString {
     Obj obj;
     int length;
+    bool isOwner;
     char* chars;
 };
 
-ObjString* copyString(const char* start, int length);
 ObjString* takeString(char* start, int length);
+ObjString* takeStringAsOwner(char* start, int length);
 void printObject(Value value);
 
 static inline bool isObjectType(Value value, ObjType type) {

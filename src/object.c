@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "value.h"
 #include "vm.h"
+#include "table.h"
 
 #define ALLOCATE_OBJ(type, objectType) \
 	(type*)allocateObject(sizeof(type), objectType)
@@ -23,11 +24,33 @@ ObjString* allocateString(char* chars, int length, uint32_t hash) {
 	string->chars = chars;
 	string->length = length;
 	string->hash = hash;
+	tableSet(&vm.strings, string, NIL_VAL);
 	return string;
+}
+
+ObjString* tableFindString(Table* table, const char* start, int length, uint32_t hash) {
+	if (table->count == 0) return NULL;
+
+	uint32_t index = hash % table->capacity;
+	Entry* entry = table->entries + index;
+	for (;;) {
+		if (entry->key == NULL) {
+			if (IS_NIL(entry->value)) return NULL;
+		} else if (length == entry->key->length &&
+			    hash == entry->key->hash &&
+				memcmp(entry->key->chars, start, length) == 0) {
+			return entry->key;
+		}
+		index = (hash + 1) % table->capacity;
+	}
+
 }
 
 ObjString* copyString(const char* start, int length) {
 	uint32_t hash = hashString(start, length);
+	ObjString* interned = tableFindString(&vm.strings, start, length, hash);
+	if (interned != NULL) return interned;
+
 	char* heapChars = ALLOCATE(char, length + 1);
     memcpy(heapChars, start, length);
 	heapChars[length] = '\0';
@@ -36,6 +59,11 @@ ObjString* copyString(const char* start, int length) {
 
 ObjString* takeString(char* start, int length) {
 	uint32_t hash = hashString(start, length);
+	ObjString* interned = tableFindString(&vm.strings, start, length, hash);
+	if (interned != NULL) {
+		FREE_ARRAY(char, start, length + 1);
+		return interned;
+	}
 	return allocateString(start, length, hash);
 }
 

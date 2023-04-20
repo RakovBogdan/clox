@@ -43,12 +43,7 @@ bool valuesEqual(Value firstValue, Value secondValue) {
         case VAL_BOOL: return AS_BOOL(firstValue) == AS_BOOL(secondValue);
         case VAL_NIL: return true;
         case VAL_NUMBER: return AS_NUMBER(firstValue) == AS_NUMBER(secondValue);
-        case VAL_OBJ: {
-            ObjString* firstString = AS_STRING(firstValue);
-            ObjString* secondString = AS_STRING(secondValue);
-            return firstString->length == secondString->length &&
-                memcmp(firstString->chars, secondString->chars, firstString->length) == 0;
-        }
+        case VAL_OBJ: return AS_OBJ(firstValue) == AS_OBJ(secondValue);
         default: return false;
     }
 }

@@ -32,8 +32,8 @@ ObjString* tableFindString(Table* table, const char* start, int length, uint32_t
 	if (table->count == 0) return NULL;
 
 	uint32_t index = hash % table->capacity;
-	Entry* entry = table->entries + index;
 	for (;;) {
+		Entry* entry = table->entries + index;
 		if (entry->key == NULL) {
 			if (IS_NIL(entry->value)) return NULL;
 		} else if (length == entry->key->length &&
@@ -41,7 +41,7 @@ ObjString* tableFindString(Table* table, const char* start, int length, uint32_t
 				memcmp(entry->key->chars, start, length) == 0) {
 			return entry->key;
 		}
-		index = (hash + 1) % table->capacity;
+		index = (index + 1) % table->capacity;
 	}
 
 }

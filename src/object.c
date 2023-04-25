@@ -24,7 +24,7 @@ ObjString* allocateString(char* chars, int length, uint32_t hash) {
 	string->chars = chars;
 	string->length = length;
 	string->hash = hash;
-	tableSet(&vm.strings, string, NIL_VAL);
+	tableSet(&vm.strings, (Value*)string, NIL_VAL);
 	return string;
 }
 
@@ -36,14 +36,23 @@ ObjString* tableFindString(Table* table, const char* start, int length, uint32_t
 		Entry* entry = table->entries + index;
 		if (entry->key == NULL) {
 			if (IS_NIL(entry->value)) return NULL;
-		} else if (length == entry->key->length &&
-			    hash == entry->key->hash &&
-				memcmp(entry->key->chars, start, length) == 0) {
-			return entry->key;
+		} else if (length == ((ObjString*)entry->key)->length &&
+			    hash == ((ObjString*)entry->key)->hash &&
+				memcmp(((ObjString*)entry->key)->chars, start, length) == 0) {
+			return (ObjString*)entry->key;
 		}
 		index = (index + 1) % table->capacity;
 	}
 
+}
+
+uint32_t hashString(const char* key, int length) {
+	uint32_t hash = 2166136261u;
+	for (int i = 0; i < length; i++) {
+		hash ^= (uint8_t)key[i];
+		hash *= 16777619;
+	}
+	return hash;
 }
 
 ObjString* copyString(const char* start, int length) {
@@ -67,14 +76,6 @@ ObjString* takeString(char* start, int length) {
 	return allocateString(start, length, hash);
 }
 
-uint32_t hashString(char* key, int length) {
-	uint32_t hash = 2166136261u;
-	for (int i = 0; i < length; i++) {
-		hash ^= (uint8_t)key[i];
-		hash *= 16777619;
-	}
-	return hash;
-}
 
 void printObject(Value value) {
     switch ((AS_OBJ(value))->type) {

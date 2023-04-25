@@ -8,6 +8,7 @@
 #include "object.h"
 #include "memory.h"
 #include "compiler.h"
+#include "value.h"
 
 VM vm;
 
@@ -173,6 +174,18 @@ InterpretResult interpret(const char* source) {
     vm.ip = vm.chunk->code;
 
     InterpretResult result = run();
+    Table test;
+    initTable(&test);
+    tableSet(&test, &BOOL_VAL(true), NIL_VAL);
+    tableSet(&test, &BOOL_VAL(false), NIL_VAL);
+    tableSet(&test, &NIL_VAL, NIL_VAL);
+    tableSet(&test, &NUMBER_VAL(15.27), BOOL_VAL(true));
+    Value* get = &NUMBER_VAL(0.0);
+    tableGet(&test, &NUMBER_VAL(15.27), get);
+    tableDelete(&test, &NIL_VAL);
+    tableDelete(&test, &BOOL_VAL(true));
+    tableDelete(&test, &NUMBER_VAL(15.27));
+    freeTable(&test);
 
     freeChunk(&chunk);
     return result;

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "debug.h"
@@ -173,6 +175,32 @@ InterpretResult interpret(const char* source) {
     vm.ip = vm.chunk->code;
 
     InterpretResult result = run();
+    Table table;
+    initTable(&table);
+    char* strings[10000];
+    int length = 0;
+    int step = 1;
+    for (int i = 0; i < 10000; i++) {
+        if (i % step == 0) {
+            length += 1;
+            step *= 10;
+        }
+        strings[i] = malloc(sizeof(char) * length);
+        sprintf(strings[i], "%d", i);
+    }
+    clock_t startTime = clock();
+    length = 0;
+    step = 1;
+    for (int i = 0; i < 10000; i++) {
+        if (i % step == 0) {
+            length += 1;
+            step *= 10;
+        }
+        tableSet(&table, takeString(strings[i], length + 1), NUMBER_VAL(i));
+    }
+    clock_t endTime = clock();
+    double timeElapsed = (double)(endTime - startTime) / CLOCKS_PER_SEC;
+
 
     freeChunk(&chunk);
     return result;

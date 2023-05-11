@@ -169,6 +169,12 @@ static void expression() {
 	parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void expressionStatement() {
+	expression();
+	consume(TOKEN_SEMICOLON, "expected ; after value.");
+	emitByte(OP_POP);
+}
+
 static void printStatement() {
 	expression();
 	consume(TOKEN_SEMICOLON, "expected ; after value.");

@@ -181,8 +181,30 @@ static void printStatement() {
 	emitByte(OP_PRINT);
 }
 
+static void synchronize() {
+	while (parser.current.type != TOKEN_EOF) {
+		if (parser.previous.type == TOKEN_SEMICOLON) return;
+
+		switch (parser.current.type) {
+			case TOKEN_CLASS: return;
+			case TOKEN_FUN: return;
+			case TOKEN_VAR: return;
+			case TOKEN_FOR: return;
+			case TOKEN_IF: return;
+			case TOKEN_WHILE: return;
+			case TOKEN_PRINT: return;
+			case TOKEN_RETURN: return;
+		}
+
+
+		advance();
+	}
+}
+
 static void declaration() {
 	statement();
+
+	if (parser.panicMode) synchronize();
 }
 
 static void statement() {

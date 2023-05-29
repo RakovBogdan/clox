@@ -171,7 +171,7 @@ static void expression() {
 
 static void expressionStatement() {
 	expression();
-	consume(TOKEN_SEMICOLON, "expected ; after value.");
+	consume(TOKEN_SEMICOLON, "expected ; after expression.");
 	emitByte(OP_POP);
 }
 
@@ -210,6 +210,8 @@ static void declaration() {
 static void statement() {
 	if (match(TOKEN_PRINT)) {
 		printStatement();
+	} else {
+		expressionStatement();
 	}
 }
 

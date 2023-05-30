@@ -147,6 +147,19 @@ static void declaration();
 static ParseRule* getRule(TokenType tokenType);
 static void parsePrecedence(Precedence precedence);
 
+static uint8_t identifierConstant(Token* name) {
+	return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static uint8_t parseVariable(const char* errorMessage) {
+	consume(TOKEN_IDENTIFIER, errorMessage);
+	return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global) {
+	emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
 static void parsePrecedence(Precedence precedence) {
 	advance();
 	ParseFn prefixRule = getRule(parser.previous.type)->prefix;
@@ -167,6 +180,19 @@ static void parsePrecedence(Precedence precedence) {
 
 static void expression() {
 	parsePrecedence(PREC_ASSIGNMENT);
+}
+
+static void varDeclaration() {
+	uint8_t global = parseVariable("Expect variable name");
+
+	if (match(TOKEN_EQUAL)) {
+		expression();
+	} else {
+		emitByte(OP_NIL);
+	}
+	consume(TOKEN_SEMICOLON, "expected ; after variable declaration.");
+
+	defineVariable(global);
 }
 
 static void expressionStatement() {
@@ -203,8 +229,11 @@ static void synchronize() {
 }
 
 static void declaration() {
-	statement();
-
+	if (match(TOKEN_VAR)) {
+		varDeclaration();
+	} else {
+		statement();
+	}
 	if (parser.panicMode) synchronize();
 }
 

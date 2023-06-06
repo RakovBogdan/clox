@@ -44,6 +44,7 @@ typedef struct {
 
 
 Parser parser;
+Table globalVariables;
 Chunk* compilingChunk;
 
 static Chunk* currentChunk() {
@@ -148,7 +149,14 @@ static ParseRule* getRule(TokenType tokenType);
 static void parsePrecedence(Precedence precedence);
 
 static uint8_t identifierConstant(Token* name) {
-	return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+	Value value;
+	if (tableGet(&globalVariables, copyString(name->start, name->length), &value)) {
+		return (uint8_t)AS_NUMBER(value);
+	} else {
+		uint8_t index = makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+		tableSet(&globalVariables, copyString(name->start, name->length), NUMBER_VAL(index));
+		return index;
+	}
 }
 
 static uint8_t parseVariable(const char* errorMessage) {
@@ -375,10 +383,12 @@ bool compile(const char* source, Chunk* chunk) {
 	compilingChunk = chunk;
 	parser.hadError = false;
 	parser.panicMode = false;
+	initTable(&globalVariables);
 	advance();
 	while(!match(TOKEN_EOF)) {
 		declaration();
 	}
 	endCompiler();
+	freeTable(&globalVariables);
 	return !parser.hadError;
 }

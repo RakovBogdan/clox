@@ -8,6 +8,7 @@
 #include "object.h"
 #include "memory.h"
 #include "compiler.h"
+#include "value.h"
 
 VM vm;
 
@@ -50,12 +51,12 @@ static void resetStack() {
 void initVM() {
     resetStack();
     vm.objects = NULL;
-    initTable(&vm.globals);
+    initValueArray(&vm.globals);
     initTable(&vm.strings);
 }
 
 void freeVM() {
-    freeTable(&vm.globals);
+    initValueArray(&vm.globals);
     freeTable(&vm.strings);
     freeObjects();
 }
@@ -151,28 +152,27 @@ static InterpretResult run() {
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP: pop(); break;
             case OP_GET_GLOBAL: {
-                ObjString* name = READ_STRING();
-                Value value;
-                if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError("Undefined variable %s'.", name->chars);
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-                push(value);
+                uint8_t variableIndex = READ_BYTE();
+
+                //if (!tableGet(&vm.globals, name, &value)) {
+                //    runtimeError("Undefined variable %s'.", name->chars);
+                //    return INTERPRET_RUNTIME_ERROR;
+                //}
+                push(vm.globals.values[variableIndex]);
                 break;
             }
             case OP_DEFINE_GLOBAL: {
-                ObjString* key = READ_STRING();
-                tableSet(&vm.globals, key, peek(0));
+                uint8_t variableIndex = READ_BYTE();
+                writeValueArrayIndex(&vm.globals, variableIndex, peek(0));
                 pop();
                 break;
             }
             case OP_SET_GLOBAL: {
-                ObjString* name = READ_STRING();
-                if (tableSet(&vm.globals, name, peek(0))) {
-                    tableDelete(&vm.globals, name);
-                    runtimeError("Undefined variable '%s'.", name->chars);
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                uint8_t variableIndex = READ_BYTE();
+
+                //runtimeError("Undefined variable '%s'.", name->chars);
+                //return INTERPRET_RUNTIME_ERROR;
+                writeValueArrayIndex(&vm.globals, variableIndex, peek(0));
                 break;
             }
             case OP_EQUAL: {

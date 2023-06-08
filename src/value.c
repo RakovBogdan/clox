@@ -21,6 +21,16 @@ void writeValueArray(ValueArray* valueArray, Value value) {
     valueArray->count++;
 }
 
+void writeValueArrayIndex(ValueArray* valueArray, int index, Value value) {
+    if (valueArray->capacity <= index) {
+        int oldCapacity = valueArray->capacity;
+        valueArray->capacity = index + 1;
+        valueArray->values = GROW_ARRAY(Value, valueArray->values, oldCapacity, valueArray->capacity);
+    }
+    valueArray->values[index] = value;
+    valueArray->count++;
+}
+
 void freeValueArray(ValueArray* valueArray) {
     FREE_ARRAY(Value, valueArray->values, valueArray->capacity);
     initValueArray(valueArray);

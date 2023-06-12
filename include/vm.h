@@ -12,6 +12,7 @@ typedef struct {
     Value stack[STACK_MAX];
     Value* stack_top;
     ValueArray globals;
+    ValueArray defined;
     Table strings;
     Obj* objects;
 } VM;

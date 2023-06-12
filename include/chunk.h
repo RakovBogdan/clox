@@ -32,6 +32,7 @@ typedef struct {
 	uint8_t* code;
 	int* lines;
 	ValueArray constants;
+	int variablesCount;
 } Chunk;
 
 void initChunk(Chunk* chunk);

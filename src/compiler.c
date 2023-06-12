@@ -388,6 +388,7 @@ bool compile(const char* source, Chunk* chunk) {
 		declaration();
 	}
 	endCompiler();
+	compilingChunk->variablesCount = globals.count;
 	freeTable(&globals);
 	return !parser.hadError;
 }

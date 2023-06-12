@@ -57,6 +57,7 @@ void initVM() {
 
 void freeVM() {
     initValueArray(&vm.globals);
+    initValueArray(&vm.defined);
     freeTable(&vm.strings);
     freeObjects();
 }
@@ -153,25 +154,26 @@ static InterpretResult run() {
             case OP_POP: pop(); break;
             case OP_GET_GLOBAL: {
                 uint8_t variableIndex = READ_BYTE();
-
-                //if (!tableGet(&vm.globals, name, &value)) {
-                //    runtimeError("Undefined variable %s'.", name->chars);
-                //    return INTERPRET_RUNTIME_ERROR;
-                //}
+                if (!AS_BOOL(vm.defined.values[variableIndex])) {
+                    runtimeError("Undefined variable");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 push(vm.globals.values[variableIndex]);
                 break;
             }
             case OP_DEFINE_GLOBAL: {
                 uint8_t variableIndex = READ_BYTE();
                 writeValueArrayIndex(&vm.globals, variableIndex, peek(0));
+                writeValueArrayIndex(&vm.defined, variableIndex, BOOL_VAL(true));
                 pop();
                 break;
             }
             case OP_SET_GLOBAL: {
                 uint8_t variableIndex = READ_BYTE();
-
-                //runtimeError("Undefined variable '%s'.", name->chars);
-                //return INTERPRET_RUNTIME_ERROR;
+                if (!AS_BOOL(vm.defined.values[variableIndex])) {
+                    runtimeError("Undefined variable");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 writeValueArrayIndex(&vm.globals, variableIndex, peek(0));
                 break;
             }
@@ -203,6 +205,14 @@ InterpretResult interpret(const char* source) {
 
     vm.chunk = &chunk;
     vm.ip = vm.chunk->code;
+
+
+    initValueArray(&vm.defined);
+    writeValueArrayIndex(&vm.defined, vm.chunk->variablesCount, BOOL_VAL(false));
+    for (int i = 0; i < vm.chunk->variablesCount; i++) {
+        vm.defined.values[i] = BOOL_VAL(false);
+    }
+
 
     InterpretResult result = run();
 

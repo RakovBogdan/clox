@@ -1,4 +1,5 @@
 var breakfast = "beignets";
 var beverage = "cafe au lait";
 breakfast = "beignets with " + beverage;
+someVariable = "10";
 print breakfast;

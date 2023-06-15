@@ -154,6 +154,7 @@ static uint8_t identifierConstant(Token* name) {
 	}
 	else {
 		tableSet(&globals, copyString(name->start, name->length), NUMBER_VAL(globals.count + 1));
+		addGlobalVariable(compilingChunk, OBJ_VAL(copyString(name->start, name->length)));
 		return globals.count;
 	}
 }

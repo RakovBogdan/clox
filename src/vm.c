@@ -80,7 +80,9 @@ void runtimeError(char* format, ...) {
 static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_GLOBAL(index) (vm.chunk->globalVariables.values[(index)])
 #define READ_STRING() (AS_STRING(READ_CONSTANT()))
+#define READ_GLOBAL_VARIABLE(index) (AS_STRING(READ_GLOBAL((index))))
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -155,7 +157,8 @@ static InterpretResult run() {
             case OP_GET_GLOBAL: {
                 uint8_t variableIndex = READ_BYTE();
                 if (!AS_BOOL(vm.defined.values[variableIndex])) {
-                    runtimeError("Undefined variable");
+                    ObjString* name = READ_GLOBAL_VARIABLE(variableIndex);
+                    runtimeError("Undefined variable %s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(vm.globals.values[variableIndex]);
@@ -171,7 +174,8 @@ static InterpretResult run() {
             case OP_SET_GLOBAL: {
                 uint8_t variableIndex = READ_BYTE();
                 if (!AS_BOOL(vm.defined.values[variableIndex])) {
-                    runtimeError("Undefined variable");
+                    ObjString* name = READ_GLOBAL_VARIABLE(variableIndex);
+                    runtimeError("Undefined variable %s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 writeValueArrayIndex(&vm.globals, variableIndex, peek(0));
@@ -190,6 +194,8 @@ static InterpretResult run() {
 #undef BINARY_OP
 #undef READ_CONSTANT
 #undef READ_STRING
+#undef READ_GLOBAL
+#undef READ_GLOBAL_VARIABLE
 #undef READ_BYTE
 }
 

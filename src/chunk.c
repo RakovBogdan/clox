@@ -8,6 +8,7 @@ void initChunk(Chunk* chunk) {
 	chunk->code = NULL;
 	chunk->lines = NULL;
 	initValueArray(&chunk->constants);
+	initValueArray(&chunk->globalVariables);
 }
 
 void writeChunk(Chunk* chunk, uint8_t byte, int line) {
@@ -28,9 +29,16 @@ int addConstant(Chunk* chunk, Value value) {
 	return chunk->constants.count - 1;
 }
 
+
+int addGlobalVariable(Chunk* chunk, Value value) {
+	writeValueArray(&chunk->globalVariables, value);
+	return chunk->constants.count - 1;
+}
+
 void freeChunk(Chunk* chunk) {
 	FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
 	FREE_ARRAY(int, chunk->lines, chunk->capacity);
 	freeValueArray(&chunk->constants);
+	freeValueArray(&chunk->globalVariables);
 	initChunk(chunk);
 }

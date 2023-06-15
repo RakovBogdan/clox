@@ -158,7 +158,7 @@ static InterpretResult run() {
                 uint8_t variableIndex = READ_BYTE();
                 if (!AS_BOOL(vm.defined.values[variableIndex])) {
                     ObjString* name = READ_GLOBAL_VARIABLE(variableIndex);
-                    runtimeError("Undefined variable %s'.", name->chars);
+                    runtimeError("Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(vm.globals.values[variableIndex]);
@@ -175,7 +175,7 @@ static InterpretResult run() {
                 uint8_t variableIndex = READ_BYTE();
                 if (!AS_BOOL(vm.defined.values[variableIndex])) {
                     ObjString* name = READ_GLOBAL_VARIABLE(variableIndex);
-                    runtimeError("Undefined variable %s'.", name->chars);
+                    runtimeError("Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 writeValueArrayIndex(&vm.globals, variableIndex, peek(0));

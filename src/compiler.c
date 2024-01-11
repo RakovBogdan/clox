@@ -45,6 +45,7 @@ typedef struct {
 typedef struct {
 	Token name;
 	int depth;
+	bool isFinal;
 } Local;
 
 typedef struct {
@@ -201,7 +202,7 @@ int resolveLocal(Compiler* compiler, Token* name) {
 	return -1;
 }
 
-static void addLocal(Token name) {
+static void addLocal(Token name, bool isFinal) {
 	if (current->localCount > UINT8_MAX) {
 		error("Too many local variables in function.");
 		return;
@@ -209,9 +210,10 @@ static void addLocal(Token name) {
 	Local* newLocal = &(current->locals[current->localCount++]);
 	newLocal->name = name;
 	newLocal->depth = -1;
+	newLocal->isFinal = isFinal;
 }
 
-static void declareVariable() {
+static void declareVariable(bool isFinal) {
 	if (current->scopeDepth == 0) return;
 
 	Token* name = &parser.previous;
@@ -226,15 +228,16 @@ static void declareVariable() {
 		}
 	}
 
-	addLocal(*name);
+	addLocal(*name, isFinal);
 }
 
-static uint8_t parseVariable(const char* errorMessage) {
+static uint8_t parseVariable(const char* errorMessage, bool isFinal) {
 	consume(TOKEN_IDENTIFIER, errorMessage);
 
-	declareVariable();
+	declareVariable(isFinal);
 	if (current->scopeDepth > 0) return 0;
 
+	//TODO: need to add final info to the global constants
 	return identifierConstant(&parser.previous);
 }
 
@@ -285,8 +288,8 @@ static void block() {
 	consume(TOKEN_RIGHT_BRACE, "Expected '}' after block");
 }
 
-static void varDeclaration() {
-	uint8_t global = parseVariable("Expect variable name");
+static void varDeclaration(bool isFinal) {
+	uint8_t global = parseVariable("Expect variable name", isFinal);
 
 	if (match(TOKEN_EQUAL)) {
 		expression();
@@ -322,6 +325,7 @@ static void synchronize() {
 			case TOKEN_CLASS: return;
 			case TOKEN_FUN: return;
 			case TOKEN_VAR: return;
+			case TOKEN_FINAL: return;
 			case TOKEN_FOR: return;
 			case TOKEN_IF: return;
 			case TOKEN_WHILE: return;
@@ -336,7 +340,9 @@ static void synchronize() {
 
 static void declaration() {
 	if (match(TOKEN_VAR)) {
-		varDeclaration();
+		varDeclaration(false);
+	} else if (match(TOKEN_FINAL)) {
+		varDeclaration(true);
 	} else {
 		statement();
 	}
@@ -367,17 +373,23 @@ static void string(bool canAssign) {
 static void namedVariable(Token name, bool canAssign) {
 	uint8_t getOp, setOp;
 	int arg = resolveLocal(current, &name);
+	bool isFinal = false;
 
 	if (arg != -1) {
 		getOp = OP_GET_LOCAL;
 		setOp = OP_SET_LOCAL;
+		isFinal = current->locals[current->localCount - arg].isFinal;
 	} else {
 		arg = identifierConstant(&name);
 		getOp = OP_GET_GLOBAL;
 		setOp = OP_SET_GLOBAL;
+		isFinal = false;
 	}
 
 	if (canAssign && match(TOKEN_EQUAL)) {
+		if (isFinal) {
+			error("Cannot assign a final variable");
+		}
 		expression();
 		emitBytes(setOp, (uint8_t)arg);
 	} else {
@@ -475,6 +487,7 @@ ParseRule rules[] = {
   [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
   [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FINAL]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},

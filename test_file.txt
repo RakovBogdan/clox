@@ -5,6 +5,8 @@ print breakfast;
 
 {
     var breakfast = "at a local restaurant";
+    final dinner = "some dinner";
+    print dinner;
     print breakfast;
 }
 

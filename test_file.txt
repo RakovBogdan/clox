@@ -3,10 +3,13 @@ var beverage = "cafe au lait";
 breakfast = "beignets with " + beverage;
 print breakfast;
 
+final someGlobalFinal = "itsFinal";
+
 {
     var breakfast = "at a local restaurant";
     final dinner = "some dinner";
     print dinner;
+    someGlobalFinal = "attempt to change final global variable";
     print breakfast;
 }
 

@@ -5,6 +5,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "object.h"
 
 
 #ifdef DEBUG_PRINT_CODE
@@ -180,8 +181,33 @@ static void declaration();
 static ParseRule* getRule(TokenType tokenType);
 static void parsePrecedence(Precedence precedence);
 
-static uint8_t identifierConstant(Token* name) {
-	return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+
+static int findGlobal(Token* name) {
+	Value globalName = (OBJ_VAL(copyString(name->start, name->length)));
+	for (int i = 0; i < currentChunk()->globalsCount; i++) {
+		ObjString* currentGlobal = AS_STRING(currentChunk()->globals[i].name);
+		if (strcmp(currentGlobal->chars, AS_STRING(globalName)->chars) == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static uint8_t newGlobal(Token* name, bool isFinal) {
+	Value globalName = (OBJ_VAL(copyString(name->start, name->length)));
+
+	Global* global = &(currentChunk()->globals[currentChunk()->globalsCount++]);
+	global->name = globalName;
+	global->isFinal = isFinal;
+	global->isReassigned = false;
+
+	return currentChunk()->globalsCount - 1;
+}
+
+static void markGlobalIsFinal(int globalIndex, bool isFinal) {
+	if (currentChunk()->globals[globalIndex].isFinal) return;
+	currentChunk()->globals[globalIndex].isFinal = isFinal;
+	
 }
 
 static bool identifiersEqual(Token* a, Token* b) {
@@ -237,8 +263,12 @@ static uint8_t parseVariable(const char* errorMessage, bool isFinal) {
 	declareVariable(isFinal);
 	if (current->scopeDepth > 0) return 0;
 
-	//TODO: need to add final info to the global constants
-	return identifierConstant(&parser.previous);
+	int index = findGlobal(&parser.previous);
+	if (index != -1) {
+		markGlobalIsFinal(index, isFinal);
+		return index;
+	}
+	return newGlobal(&parser.previous, isFinal);
 }
 
 static void markInitialized() {
@@ -380,10 +410,12 @@ static void namedVariable(Token name, bool canAssign) {
 		setOp = OP_SET_LOCAL;
 		isFinal = current->locals[current->localCount - arg].isFinal;
 	} else {
-		arg = identifierConstant(&name);
+		arg = findGlobal(&name);
 		getOp = OP_GET_GLOBAL;
 		setOp = OP_SET_GLOBAL;
-		isFinal = false;
+		if (arg != -1) {
+			isFinal = currentChunk()->globals[arg].isFinal;
+		}
 	}
 
 	if (canAssign && match(TOKEN_EQUAL)) {
@@ -391,6 +423,11 @@ static void namedVariable(Token name, bool canAssign) {
 			error("Cannot assign a final variable");
 		}
 		expression();
+		if (arg == -1) {
+			int globalIndex = newGlobal(&name, false);
+			currentChunk()->globals[globalIndex].isReassigned = true;
+			arg = globalIndex;
+		}
 		emitBytes(setOp, (uint8_t)arg);
 	} else {
 		emitBytes(getOp, (uint8_t)arg);

@@ -29,11 +29,19 @@ typedef enum {
 } OpCode;
 
 typedef struct {
+	Value name;
+	bool isFinal;
+	bool isReassigned;
+} Global;
+
+typedef struct {
 	int count;
 	int capacity;
 	uint8_t* code;
 	int* lines;
 	ValueArray constants;
+	Global globals[UINT8_COUNT];
+	int globalsCount;
 } Chunk;
 
 void initChunk(Chunk* chunk);

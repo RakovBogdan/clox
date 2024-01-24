@@ -79,6 +79,8 @@ static InterpretResult run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_STRING() (AS_STRING(READ_CONSTANT()))
+#define READ_GLOBAL() ((vm.chunk->globals[READ_BYTE()]).name)
+#define READ_GLOBAL_NAME() (AS_STRING(READ_GLOBAL()))
 #define BINARY_OP(valueType, op) \
     do { \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -161,7 +163,7 @@ static InterpretResult run() {
                 break;
             }
             case OP_GET_GLOBAL: {
-                ObjString* name = READ_STRING();
+                ObjString* name = READ_GLOBAL_NAME();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
                     runtimeError("Undefined variable %s'.", name->chars);
@@ -171,13 +173,13 @@ static InterpretResult run() {
                 break;
             }
             case OP_DEFINE_GLOBAL: {
-                ObjString* key = READ_STRING();
+                ObjString* key = READ_GLOBAL_NAME();
                 tableSet(&vm.globals, key, peek(0));
                 pop();
                 break;
             }
             case OP_SET_GLOBAL: {
-                ObjString* name = READ_STRING();
+                ObjString* name = READ_GLOBAL_NAME();
                 if (tableSet(&vm.globals, name, peek(0))) {
                     tableDelete(&vm.globals, name);
                     runtimeError("Undefined variable '%s'.", name->chars);
@@ -198,6 +200,8 @@ static InterpretResult run() {
 #undef BINARY_OP
 #undef READ_CONSTANT
 #undef READ_STRING
+#undef READ_GLOBAL
+#undef READ_GLOBAL_NAME
 #undef READ_BYTE
 }
 

@@ -5,6 +5,15 @@ print breakfast;
 
 {
     var breakfast = "at a local restaurant";
+    var hello = "Priviyt";
+    var test1 = "test";
+    var test2 = "test";
+    var test3 = "test";
+    var test4 = "test";
+    var test5 = "test";
+    var test6 = "test";
+    var test7 = "test";
+    var test8 = "test";
     print breakfast;
 }
 

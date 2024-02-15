@@ -144,6 +144,17 @@ static void emitConstant(Value value) {
 	emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+static void patchJump(int offset) {
+	int jump = currentChunk()->count - offset - 2;
+
+	if (jump > UINT16_MAX) {
+		error("Too much code to jump over.");
+	}
+
+	currentChunk()->code[offset] = (jump >> 8) & 0xff;
+	currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
 void initCompiler(Compiler* compiler) {
 	compiler->localCount = 0;
 	compiler->scopeDepth = 0;
@@ -304,6 +315,25 @@ static void expressionStatement() {
 	emitByte(OP_POP);
 }
 
+
+static int emitJump(uint8_t instruction) {
+	emitByte(instruction);
+	emitByte(0xff);
+	emitByte(0xff);
+
+	return currentChunk()->count - 2;
+}
+
+static void ifStatement() {
+	consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+	expression();
+	consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+
+	int thenJump = emitJump(OP_JUMP_IF_FALSE);
+	statement();
+	patchJump(thenJump);
+}
+
 static void printStatement() {
 	expression();
 	consume(TOKEN_SEMICOLON, "expected ; after value.");
@@ -346,10 +376,13 @@ static void declaration() {
 static void statement() {
 	if (match(TOKEN_PRINT)) {
 		printStatement();
-	} else if (match(TOKEN_LEFT_BRACE)) {
+	}
+	else if (match(TOKEN_LEFT_BRACE)) {
 		beginScope();
 		block();
 		endScope();
+	} else if (match(TOKEN_IF)) {
+		ifStatement();
 	} else {
 		expressionStatement();
 	}

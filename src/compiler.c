@@ -155,6 +155,21 @@ static void emitConstant(Value value) {
 	emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
+static int emitJump(uint8_t instruction) {
+	emitByte(instruction);
+	emitByte(0xff);
+	emitByte(0xff);
+
+	return currentChunk()->count - 2;
+}
+
+static void emitJumpBack(uint8_t instruction, int address) {
+	int jump = currentChunk()->count - address + 4;
+	emitByte(instruction);
+	emitByte((jump >> 8) & 0xff);
+	emitByte(jump & 0xff);
+}
+
 static void patchJump(int offset) {
 	int jump = currentChunk()->count - offset - 2;
 
@@ -335,6 +350,43 @@ static void expressionStatement() {
 	emitByte(OP_POP);
 }
 
+static void switchStatement() {
+	consume(TOKEN_LEFT_PAREN, "expect '(' after 'switch'.");
+	expression();
+	consume(TOKEN_RIGHT_PAREN, "expect ')' after switch clause.");
+	consume(TOKEN_LEFT_BRACE, "expect '{' before switch body.");
+
+	int jumpOver = emitJump(OP_JUMP);
+	int exitJump = emitJump(OP_JUMP);
+	patchJump(jumpOver);
+
+	while (match(TOKEN_CASE)) {
+		expression();
+		consume(TOKEN_COLON, "expect ':' after case clause.");
+		emitByte(OP_EQUAL_COMPARE);
+		int nextCase = emitJump(OP_JUMP_IF_FALSE);
+		emitByte(OP_POP);
+		while (!check(TOKEN_SEMICOLON) && !check(TOKEN_CASE) && !check(TOKEN_DEFAULT) && !check(TOKEN_RIGHT_BRACE)) {
+			statement();
+		}
+		emitJumpBack(OP_JUMP_BACK, exitJump);
+		patchJump(nextCase);
+		emitByte(OP_POP);
+	}
+
+	if (match(TOKEN_DEFAULT)) {
+		consume(TOKEN_COLON, "expect ':' after default clause.");
+		if (!match(TOKEN_SEMICOLON)) {
+			statement();
+		}
+	}
+
+	patchJump(exitJump);
+	emitByte(OP_POP);
+	consume(TOKEN_RIGHT_BRACE, "expect '}' after switch body.");
+	
+}
+
 static void forStatement() {
 	beginScope();
 	consume(TOKEN_LEFT_PAREN, "expect '(' after 'for'.");
@@ -380,14 +432,6 @@ static void forStatement() {
 	}
 
 	endScope();
-}
-
-static int emitJump(uint8_t instruction) {
-	emitByte(instruction);
-	emitByte(0xff);
-	emitByte(0xff);
-
-	return currentChunk()->count - 2;
 }
 
 static void ifStatement() {
@@ -467,6 +511,8 @@ static void statement() {
 		endScope();
 	} else if (match(TOKEN_FOR)) {
 		forStatement();
+	} else if (match(TOKEN_SWITCH)) {
+		switchStatement();
 	} else if (match(TOKEN_IF)) {
 		ifStatement();
 	} else if (match(TOKEN_WHILE)) {

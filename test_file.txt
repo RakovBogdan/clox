@@ -1,3 +1,7 @@
-for (var x = 0; x < 10; x=x+1) {
-	print x;
+var a = 17;
+
+switch (a) {
+	case 15: print "Hello"; print "Hello again";
+	case 14: print "Hello world!"; print "Hello world! again";
+	default: print "Bye!";
 }

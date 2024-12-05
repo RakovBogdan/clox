@@ -48,10 +48,18 @@ typedef struct {
 } Local;
 
 typedef struct {
+	int loopAddress;
+	int scopesNumber;
+	int loopStartingDepth;
+} LoopInfo;
+
+typedef struct {
 	Local locals[UINT8_COUNT];
 	int localCount;
 	int scopeDepth;
-} Compiler;
+	LoopInfo loopStack[UINT8_COUNT];
+	int currentLoop;
+} Compiler; 
 
 
 Parser parser;
@@ -169,6 +177,7 @@ static void patchJump(int offset) {
 void initCompiler(Compiler* compiler) {
 	compiler->localCount = 0;
 	compiler->scopeDepth = 0;
+	compiler->currentLoop = 0;
 	current = compiler;
 }
 
@@ -183,6 +192,9 @@ static void endCompiler() {
 
 static beginScope() {
 	current->scopeDepth++;
+	if (current->currentLoop != -1) {
+		current->loopStack[current->currentLoop].scopesNumber += 1;
+	}
 }
 
 static endScope() {
@@ -192,6 +204,27 @@ static endScope() {
 		current->locals[current->localCount - 1].depth > current->scopeDepth) {
 		emitByte(OP_POP);
 		current->localCount--;
+	}
+
+	if (current->currentLoop != -1) {
+		current->loopStack[current->currentLoop].scopesNumber -= 1;
+	}
+}
+
+static generateLocalsPoppingForLoop(int loopScopes) {
+
+	int currentScopeDepth = loopScopes;
+	int localsCountBeforeContinue = current->localCount;
+	int loopStartingDepth = current->loopStack[current->currentLoop].loopStartingDepth;
+
+	while (currentScopeDepth > 0) {
+		currentScopeDepth--;
+
+		while (localsCountBeforeContinue > 0 &&
+			current->locals[localsCountBeforeContinue - 1].depth > loopStartingDepth + currentScopeDepth) {
+			emitByte(OP_POP);
+			localsCountBeforeContinue--;
+		}
 	}
 }
 
@@ -371,6 +404,11 @@ static void forStatement() {
 	}
 
 
+	current->currentLoop++;
+	current->loopStack[current->currentLoop].loopAddress = loopStart;
+	current->loopStack[current->currentLoop].scopesNumber = 0;
+	current->loopStack[current->currentLoop].loopStartingDepth = current->scopeDepth;
+
 	statement();
 	emitLoop(loopStart);
 	
@@ -380,6 +418,7 @@ static void forStatement() {
 	}
 
 	endScope();
+	current->currentLoop--;
 }
 
 static int emitJump(uint8_t instruction) {
@@ -413,6 +452,10 @@ static void printStatement() {
 
 static void whileStatement() {
 	int loopStart = currentChunk()->count;
+	current->currentLoop++;
+	current->loopStack[current->currentLoop].loopAddress = loopStart;
+	current->loopStack[current->currentLoop].scopesNumber = 0;
+	current->loopStack[current->currentLoop].loopStartingDepth = current->scopeDepth;
 	consume(TOKEN_LEFT_PAREN, "expect '(' after 'while'.");
 	expression();
 	consume(TOKEN_RIGHT_PAREN, "expect ')' after condition.");
@@ -424,6 +467,22 @@ static void whileStatement() {
 
 	patchJump(exitJump);
 	emitByte(OP_POP);
+	current->currentLoop--;
+}
+
+
+static void continueStatement() {
+	if (current->currentLoop == 0) {
+		error("Can't use continue statement outside of a loop");
+		return;
+	}
+
+	int loopScopes = current->loopStack[current->currentLoop].scopesNumber;
+
+	generateLocalsPoppingForLoop(loopScopes);
+
+	emitLoop(current->loopStack[current->currentLoop].loopAddress);
+	consume(TOKEN_SEMICOLON, "expected ; after continue statement.");
 }
 
 
@@ -471,6 +530,8 @@ static void statement() {
 		ifStatement();
 	} else if (match(TOKEN_WHILE)) {
 		whileStatement();
+	} else if (match(TOKEN_CONTINUE)) {
+		continueStatement();
 	} else {
 		expressionStatement();
 	}

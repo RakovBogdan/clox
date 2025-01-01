@@ -19,6 +19,14 @@ Obj* allocateObject(size_t size, ObjType type) {
 	return object;
 }
 
+ObjFunction* newFunction() {
+	ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+	function->arity = 0;
+	function->name = NULL;
+	initChunk(&function->chunk);
+	return function;
+}
+
 ObjString* allocateString(char* chars, int length, uint32_t hash) {
 	ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 	string->chars = chars;
@@ -57,6 +65,10 @@ ObjString* copyString(const char* start, int length) {
 	return allocateString(heapChars, length, hash);
 }
 
+static void printFunction(ObjFunction* function) {
+	printf("<fn %s>", function->name->chars);
+}
+
 ObjString* takeString(char* start, int length) {
 	uint32_t hash = hashString(start, length);
 	ObjString* interned = tableFindString(&vm.strings, start, length, hash);
@@ -78,6 +90,9 @@ uint32_t hashString(char* key, int length) {
 
 void printObject(Value value) {
     switch ((AS_OBJ(value))->type) {
+        case(OBJ_FUNCTION): 
+			printFunction(AS_FUNCTION(value));
+			break;
         case(OBJ_STRING): printf("%s", AS_CSTRING(value)); break;
     }
 }
